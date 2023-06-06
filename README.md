@@ -41,5 +41,5 @@ segfault的调用堆栈如下图
 
 在应用该补丁后问题得到解决
 
-感谢 @U2FsdGVkX1 在解决此问题时提供的帮助
+感谢 [U2FsdGVkX1](https://github.com/U2FsdGVkX1) 在解决此问题时提供的帮助
 
