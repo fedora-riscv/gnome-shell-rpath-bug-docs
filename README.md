@@ -2,7 +2,7 @@
 起初是发现 Fedora 38 RISC-V 在执行 `gnome-shell --list-modes` 时出现 segfault 的情况，便对这一问题展开了调查
 
 ## 过程
-在干净的 Fedora 38 RISC-V 上安装 gnome-shell(https://openkoji.iscas.ac.cn/koji/buildinfo?buildID=51424)，并测试 `gnome-shell --list-modes` 确实有问题，随后下载了该包的 debugsource 和 debuginfo 并使用 gdb 分析
+在干净的 Fedora 38 RISC-V 上安装 [gnome-shell](https://openkoji.iscas.ac.cn/koji/buildinfo?buildID=51424)，并测试 `gnome-shell --list-modes` 确实有问题，随后下载了该包的 debugsource 和 debuginfo 并使用 gdb 分析
 
 segfault的调用堆栈如下图
 ![image](https://github.com/fedora-riscv/gnome-shell-rpath-bug-docs/assets/5274559/00cfa3ae-4afa-48b1-bdb3-534e0fdb9bf2)
@@ -12,6 +12,24 @@ segfault的调用堆栈如下图
 可以看到 
 
 [https://github.com/GNOME/gnome-shell/blame/0eec6fea6913aae84724391224990091a215059f/src/main.c#L156-L159](https://github.com/GNOME/gnome-shell/blame/0eec6fea6913aae84724391224990091a215059f/src/main.c#L156-L159)
+
+```c
+  for (dyn = _DYNAMIC; dyn->d_tag != DT_NULL; dyn++)
+    {
+      if (dyn->d_tag == DT_RPATH)
+        rpath = dyn;
+      else if (dyn->d_tag == DT_RUNPATH)
+        runpath = dyn;
+      else if (dyn->d_tag == DT_STRTAB)
+        strtab = (const char *) dyn->d_un.d_val;
+    }
+  if ((!rpath && !runpath) || !strtab)
+    return;
+  if (rpath)
+    paths = g_strsplit (strtab + rpath->d_un.d_val, ":", -1);
+  else
+    paths = g_strsplit (strtab + runpath->d_un.d_val, ":", -1);
+```
 
 此处调用了 `g_strsplit()`，而 strtab 出自上面的 for 循环
 
